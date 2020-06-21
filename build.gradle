@@ -29,6 +29,8 @@ dependencies {
     implementation 'info.picocli:picocli:4.2.0'
     implementation 'net.imagej:imagej:2.0.0-rc-72'
     implementation 'net.imglib2:imglib2:5.9.2'
+    // imglib2-ij only needed to display images for testing
+    implementation 'net.imglib2:imglib2-ij:2.0.0-beta-46'
     implementation 'io.scif:scifio:0.40.0'
     implementation 'io.scif:scifio-bf-compat:4.1.0'
 
