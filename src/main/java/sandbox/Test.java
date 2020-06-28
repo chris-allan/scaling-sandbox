@@ -11,17 +11,19 @@ import io.scif.services.FormatService;
 import java.io.IOException;
 
 import net.imglib2.FinalInterval;
-import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
-import net.imglib2.img.ImgFactory;
-import net.imglib2.img.cell.CellImgFactory;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.realtransform.RealViews;
 import net.imglib2.realtransform.Scale;
 import net.imglib2.util.Intervals;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
+
+import org.janelia.saalfeldlab.n5.Compression;
+import org.janelia.saalfeldlab.n5.N5Writer;
+import org.janelia.saalfeldlab.n5.N5FSWriter;
+import org.janelia.saalfeldlab.n5.RawCompression;
+import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 
 import org.scijava.io.location.FileLocation;
 
@@ -43,29 +45,32 @@ public class Test {
             // downsample 50% in X and Y
             // tried using the "scaleView" op, but matching is not reliable (maybe due to BioFormatsFormat?)
 
-						final long[] newDims = Intervals.dimensionsAsLongArray(img);
+            final long[] dims = Intervals.dimensionsAsLongArray(img);
+            final long[] newDims = new long[dims.length];
             double[] scaleFactors = new double[newDims.length];
             scaleFactors[0] = 0.5;
             scaleFactors[1] = 0.5;
-						for (int i=0; i<newDims.length; i++) {
+            for (int i=0; i<newDims.length; i++) {
                 if (i >= 2) {
-                    scaleFactors[i] = 1.0 / newDims[i];
+                    newDims[i] = dims[i];
                 }
-						    newDims[i] = Math.round(newDims[i] * scaleFactors[i]);
-						}
+                else {
+                    newDims[i] = Math.round(dims[i] * scaleFactors[i]);
+                }
+            }
 
-						NLinearInterpolatorFactory interpolator = new NLinearInterpolatorFactory();
-						IntervalView interval = Views.interval(Views.raster(RealViews.affineReal(
-								Views.interpolate(Views.extendMirrorSingle(img), interpolator),
-								new Scale(scaleFactors))), new FinalInterval(newDims));
-
-            // display image
-            ImageJFunctions.show(interval);
+            NLinearInterpolatorFactory interpolator = new NLinearInterpolatorFactory();
+            IntervalView interval = Views.interval(Views.raster(RealViews.affineReal(
+                Views.interpolate(Views.extendMirrorSingle(img), interpolator),
+                new Scale(scaleFactors))), new FinalInterval(newDims));
 
             // save scaled image
-            // TODO: how to convert an IntervalView to an Img?
-            //ImgSaver saver = new ImgSaver();
-            //saver.saveImg(new FileLocation(args[1]), interval);
+
+            int[] blockSize = new int[] {512, 512, 1};
+            N5Writer n5 = new N5FSWriter(args[1]);
+            Compression compression = new RawCompression();
+
+            N5Utils.save(interval, n5, "1", blockSize, compression);
         }
         catch (final Exception e) {
             e.printStackTrace();
