@@ -1,13 +1,5 @@
 package sandbox;
 
-import io.scif.Format;
-import io.scif.SCIFIO;
-import io.scif.bf.BioFormatsFormat;
-import io.scif.img.ImgIOException;
-import io.scif.img.ImgOpener;
-import io.scif.img.ImgSaver;
-import io.scif.services.FormatService;
-
 import java.io.IOException;
 
 import net.imglib2.FinalInterval;
@@ -20,30 +12,27 @@ import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
 import org.janelia.saalfeldlab.n5.Compression;
-import org.janelia.saalfeldlab.n5.N5Writer;
+import org.janelia.saalfeldlab.n5.N5FSReader;
 import org.janelia.saalfeldlab.n5.N5FSWriter;
+import org.janelia.saalfeldlab.n5.N5Reader;
+import org.janelia.saalfeldlab.n5.N5Writer;
 import org.janelia.saalfeldlab.n5.RawCompression;
 import org.janelia.saalfeldlab.n5.imglib2.N5Utils;
 
-import org.scijava.io.location.FileLocation;
-
 public class Test {
     public static void main(String[] args) {
-        SCIFIO scifio = new SCIFIO();
+        if (args.length < 3) {
+            System.err.println("Usage: java Test <input path> <input dataset> <output path>");
+            System.exit(1);
+        }
         try {
-            // turn off all formats except Bio-Formats compatibility format
-            FormatService formats = scifio.format();
-            for (Format f : formats.getAllFormats()) {
-                f.setEnabled(f instanceof BioFormatsFormat);
-            }
-
-            // open image from specified file
-            ImgOpener opener = new ImgOpener();
-            // no openImg(Location) signature
-            final Img img = opener.openImgs(new FileLocation(args[0])).get(0);
+            String dataset = args[1];
+            N5Reader reader =  new N5FSReader(args[0]);
+            // lots of different open*(*) signatures to choose from
+            // can specify disk caching, cache size, etc.
+            final Img img = N5Utils.open(reader, dataset);
 
             // downsample 50% in X and Y
-            // tried using the "scaleView" op, but matching is not reliable (maybe due to BioFormatsFormat?)
 
             final long[] dims = Intervals.dimensionsAsLongArray(img);
             final long[] newDims = new long[dims.length];
@@ -67,18 +56,15 @@ public class Test {
             // save scaled image
 
             int[] blockSize = new int[] {512, 512, 1};
-            N5Writer n5 = new N5FSWriter(args[1]);
+            N5Writer n5 = new N5FSWriter(args[2]);
             Compression compression = new RawCompression();
 
-            N5Utils.save(interval, n5, "1", blockSize, compression);
+            N5Utils.save(interval, n5, "0", blockSize, compression);
         }
         catch (final Exception e) {
             e.printStackTrace();
         }
         finally {
-            // context disposal takes several seconds
-            /* debug */ System.out.println("shutting down...");
-            scifio.context().dispose();
         }
     }
 }

@@ -27,10 +27,7 @@ dependencies {
     implementation 'ome:formats-gpl:6.5.0'
     implementation 'ome:formats-bsd:6.5.0'
     implementation 'info.picocli:picocli:4.2.0'
-    implementation 'net.imagej:imagej:2.0.0-rc-72'
     implementation 'net.imglib2:imglib2:5.9.2'
-    implementation 'io.scif:scifio:0.40.0'
-    implementation 'io.scif:scifio-bf-compat:4.1.0'
     implementation 'org.janelia.saalfeldlab:n5-imglib2:3.5.1'
 
     // https://github.com/junit-team/junit5-samples/blob/master/junit5-migration-gradle/build.gradle
