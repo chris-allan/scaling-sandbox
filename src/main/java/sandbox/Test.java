@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import net.imglib2.FinalInterval;
+import net.imglib2.RandomAccessible;
 import net.imglib2.img.Img;
 import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.realtransform.RealViews;
@@ -58,24 +59,26 @@ public class Test {
             croppedSize[0] = dims[0] / 2;
             croppedSize[1] = dims[1] / 2;
 
-            final long[] bottomRight = new long[dims.length];
-            for (int i=0; i<bottomRight.length; i++) {
-                bottomRight[i] = (topLeft[i] + croppedSize[i]) - 1;
-            }
+            IntervalView interval = Views.offsetInterval(img, topLeft, croppedSize);
 
-            IntervalView interval = Views.interval(img, topLeft, bottomRight);
-
-            /*
             // downsample 50% in X and Y
 
-            double[] scaleFactors = new double[] {0.5, 0.5, 1, 1, 1};
+            double[] scaleFactors = new double[dims.length];
+            Arrays.fill(scaleFactors, 1.0);
+            scaleFactors[0] = 0.5;
+            scaleFactors[1] = 0.5;
+
+            long[] scaledSize = new long[scaleFactors.length];
+            for (int i=0; i<scaledSize.length; i++) {
+                scaledSize[i] = Math.round(scaleFactors[i] * croppedSize[i]);
+            }
 
             NLinearInterpolatorFactory interpolator = new NLinearInterpolatorFactory();
+            // can choose other extension (out of bounds) strategies, but some have
+            // limitations on the dimension size
             interval = Views.interval(Views.raster(RealViews.affineReal(
-                Views.interpolate(Views.extendMirrorSingle(interval), interpolator),
-                new Scale(scaleFactors))), new FinalInterval(2000, 2000, 1, 1, 1));
-            */
-
+                Views.interpolate(Views.extendZero(interval), interpolator), new Scale(scaleFactors))),
+                new FinalInterval(scaledSize));
 
             // save scaled image
 
