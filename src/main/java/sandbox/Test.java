@@ -5,8 +5,10 @@ import java.util.Arrays;
 
 import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessible;
+import net.imglib2.algorithm.gauss3.Gauss3;
 import net.imglib2.img.Img;
-import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
+//import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
+import net.imglib2.interpolation.randomaccess.*;
 import net.imglib2.realtransform.RealViews;
 import net.imglib2.realtransform.Scale;
 import net.imglib2.util.Intervals;
@@ -32,7 +34,9 @@ public class Test {
             N5Reader reader =  new N5FSReader(args[0]);
             // lots of different open*(*) signatures to choose from
             // can specify disk caching, cache size, etc.
-            final Img img = N5Utils.open(reader, dataset);
+            Img img = N5Utils.open(reader, dataset);
+
+            final long[] dims = Intervals.dimensionsAsLongArray(img);
 
             // crop to a particular region
             // for now, choose a centered region with X and Y 50% of the original size:
@@ -48,16 +52,21 @@ public class Test {
             //  |        |
             //  ----------
 
-            final long[] dims = Intervals.dimensionsAsLongArray(img);
             final long[] topLeft = new long[dims.length];
             Arrays.fill(topLeft, 0);
             final long[] croppedSize = new long[dims.length];
             Arrays.fill(croppedSize, 1);
 
+            /*
             topLeft[0] = dims[0] / 4;
             topLeft[1] = dims[1] / 4;
             croppedSize[0] = dims[0] / 2;
             croppedSize[1] = dims[1] / 2;
+            */
+            topLeft[0] = 0;
+            topLeft[1] = 0;
+            croppedSize[0] = dims[0];
+            croppedSize[1] = dims[1];
 
             IntervalView interval = Views.offsetInterval(img, topLeft, croppedSize);
 
@@ -74,11 +83,20 @@ public class Test {
             }
 
             NLinearInterpolatorFactory interpolator = new NLinearInterpolatorFactory();
+            //FloorInterpolatorFactory interpolator = new FloorInterpolatorFactory();
+            //LanczosInterpolatorFactory interpolator = new LanczosInterpolatorFactory();
+            //NearestNeighborInterpolatorFactory interpolator = new NearestNeighborInterpolatorFactory();
+            //ClampingNLinearInterpolatorFactory interpolator = new ClampingNLinearInterpolatorFactory();
+
             // can choose other extension (out of bounds) strategies, but some have
             // limitations on the dimension size
             interval = Views.interval(Views.raster(RealViews.affineReal(
                 Views.interpolate(Views.extendZero(interval), interpolator), new Scale(scaleFactors))),
                 new FinalInterval(scaledSize));
+
+            // TODO: quickly runs out of memory, even when the downsampled image is smaller than 1000x1000
+            double sigma = 3.0;
+            Gauss3.gauss(sigma, interval, interval);
 
             // save scaled image
 

@@ -28,6 +28,7 @@ dependencies {
     implementation 'ome:formats-bsd:6.5.0'
     implementation 'info.picocli:picocli:4.2.0'
     implementation 'net.imglib2:imglib2:5.9.2'
+    implementation 'net.imglib2:imglib2-algorithm:0.11.2'
     implementation 'org.janelia.saalfeldlab:n5-blosc:1.1.0'
     implementation 'org.janelia.saalfeldlab:n5-imglib2:3.5.1'
 
