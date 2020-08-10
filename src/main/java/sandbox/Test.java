@@ -1,10 +1,9 @@
 package sandbox;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 import net.imglib2.FinalInterval;
-import net.imglib2.RandomAccessible;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.gauss3.Gauss3;
 import net.imglib2.img.Img;
 //import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
@@ -12,7 +11,6 @@ import net.imglib2.interpolation.randomaccess.*;
 import net.imglib2.realtransform.RealViews;
 import net.imglib2.realtransform.Scale;
 import net.imglib2.util.Intervals;
-import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
 import org.janelia.saalfeldlab.n5.Compression;
@@ -68,7 +66,7 @@ public class Test {
             croppedSize[0] = dims[0];
             croppedSize[1] = dims[1];
 
-            IntervalView interval = Views.offsetInterval(img, topLeft, croppedSize);
+            RandomAccessibleInterval interval = Views.offsetInterval(img, topLeft, croppedSize);
 
             // downsample 50% in X and Y
 
@@ -90,9 +88,9 @@ public class Test {
 
             // can choose other extension (out of bounds) strategies, but some have
             // limitations on the dimension size
-            interval = Views.interval(Views.raster(RealViews.affineReal(
+            interval = Views.dropSingletonDimensions(Views.interval(Views.raster(RealViews.affineReal(
                 Views.interpolate(Views.extendZero(interval), interpolator), new Scale(scaleFactors))),
-                new FinalInterval(scaledSize));
+                new FinalInterval(scaledSize)));
 
             // TODO: quickly runs out of memory, even when the downsampled image is smaller than 1000x1000
             double sigma = 3.0;
@@ -100,7 +98,7 @@ public class Test {
 
             // save scaled image
 
-            int[] blockSize = new int[dims.length];
+            int[] blockSize = new int[interval.numDimensions()];
             for (int i=0; i<blockSize.length; i++) {
                 blockSize[i] = i < 2 ? 500 : 1;
             }
